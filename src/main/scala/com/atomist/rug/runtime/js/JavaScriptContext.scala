@@ -52,6 +52,7 @@ class JavaScriptContext(rugAs: ArtifactSource, allowedClasses: Set[String] = Set
     * @param scriptObjectMirror interface for working with Var
     */
   case class Var(key: String, scriptObjectMirror: ScriptObjectMirror) {
+
   }
 
 

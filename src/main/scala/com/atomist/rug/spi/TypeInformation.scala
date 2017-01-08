@@ -79,7 +79,6 @@ case class TypeOperation(
       throw new IllegalArgumentException(
         s"Operation [$name] cannot be invoked on [${target.getClass.getName}]: Found ${methods.size} definitions with ${parameters.size}, required exactly 1: " +
           methods.mkString(","))
-    // println(s"About to invoke ${methods.head} with args=$args")
     try {
       methods.head.invoke(target, args: _*)
     } catch {

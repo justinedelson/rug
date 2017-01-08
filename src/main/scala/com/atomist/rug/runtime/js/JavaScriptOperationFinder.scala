@@ -57,9 +57,7 @@ object JavaScriptOperationFinder {
     for (f <- filtered.allFiles) {
       jsc.eval(f)
     }
-
-    val operations = operationsFromVars(rugAs, jsc)
-    operations
+    operationsFromVars(rugAs, jsc)
   }
 
 

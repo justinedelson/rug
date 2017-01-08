@@ -41,6 +41,12 @@ trait AtomistConfig {
   def handlersDirectory: String
 
   /**
+    *
+    * Extensions directory under Atomist root or root of archive
+    */
+  def extensionsDirectory: String
+
+  /**
     * Extension for Rug files.
     */
   def rugExtension: String
@@ -56,6 +62,8 @@ trait AtomistConfig {
   def executorsRoot = s"$atomistRoot/$executorsDirectory"
 
   def handlersRoot = s"$atomistRoot/$handlersDirectory"
+
+  def extensionsRoot = s"$atomistRoot/$extensionsDirectory"
 
   def testsRoot = s"$atomistRoot/$testsDirectory"
 
@@ -115,6 +123,8 @@ object DefaultAtomistConfig extends AtomistConfig {
   override val executorsDirectory = "executors"
 
   override val handlersDirectory = "handlers"
+
+  override val extensionsDirectory = "extensions"
 
   override val testsDirectory = "tests"
 
