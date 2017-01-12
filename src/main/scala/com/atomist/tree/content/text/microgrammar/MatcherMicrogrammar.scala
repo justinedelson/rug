@@ -21,13 +21,15 @@ class MatcherMicrogrammar(val matcher: Matcher) extends Microgrammar {
 
   override def findMatches(input: CharSequence, l: Option[MatchListener]): Seq[MutableContainerTreeNode] = {
     val nodes = findMatchesInternal(input, l)
-    nodes collect {
+    val mnodes = nodes collect {
       case mut: MutableContainerTreeNode =>
         outputNode(input, mut)
       case tn: TerminalTreeNode =>
-        val raw = new MicrogrammarField(tn.nodeName, tn.nodeName, Seq(tn), tn.startPosition, tn.endPosition)
+        val raw = new MicrogrammarNode(tn.nodeName, tn.nodeName, Seq(tn), tn.startPosition, tn.endPosition)
         SimpleMutableContainerTreeNode.wrap(name, raw)
     }
+    mnodes.foreach(mn => mn.addType(MicrogrammarNode.MicrogrammarType))
+    mnodes
   }
 
   private def outputNode(input: CharSequence, n: TreeNode) = {
@@ -71,7 +73,7 @@ class MatcherMicrogrammar(val matcher: Matcher) extends Microgrammar {
 
 }
 
-private class MicrogrammarField(name: String,
+private class MicrogrammarNode(name: String,
                                 typ: String,
                                 fields: Seq[TreeNode],
                                 startPosition: InputPosition,
@@ -80,4 +82,9 @@ private class MicrogrammarField(name: String,
     name: String, fields, startPosition, endPosition) {
 
   addType(typ)
+}
+
+object MicrogrammarNode {
+
+  val MicrogrammarType = "microgrammar"
 }

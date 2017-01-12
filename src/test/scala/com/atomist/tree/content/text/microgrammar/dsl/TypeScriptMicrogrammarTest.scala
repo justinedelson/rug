@@ -106,7 +106,7 @@ class TypeScriptMicrogrammarTest extends FlatSpec with Matchers {
       |
       |      eng.with<any>(project, "//File()/method()", n => {
       |        //console.log(`Type=${n.nodeType()},value=${n.value()}`)
-      |        n.update(n.type.value() + "x")
+      |        n.update(n.type().value() + "x")
       |      })
       |      return new Result(Status.Success, `OK`)
       |    }

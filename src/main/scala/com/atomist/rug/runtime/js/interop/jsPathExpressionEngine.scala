@@ -195,6 +195,8 @@ class jsPathExpressionEngine(
           // Rename dynamic dispatch as mode?
         case tn if types.exists(t => t.typeInformation.isInstanceOf[DynamicTypeInformation]) =>
           new NodeNavigationProxy(n)
+        case tn if tn.nodeType.contains(MicrogrammarNode.MicrogrammarType) =>
+          new NodeNavigationProxy(n)
         case _ =>
           new SafeCommittingProxy(types, n, cr)
       }

@@ -28,7 +28,14 @@ private[interop] class NodeNavigationProxy(
         case tn: { def update(s: String): Unit } if "update".equals(name) =>
           MethodInvocationProxyUpdate(tn)
         case ctn: ContainerTreeNode =>
-          ctn.childrenNamed(name).map(k => new NodeNavigationProxy(k)).asJava
+          MethodInvocationProxyReturning({
+            // TODO this is ugly
+//            ctn.childrenNamed(name).map(k =>
+//              new NodeNavigationProxy(k)).asJava
+            val it = ctn.childrenNamed(name).headOption.getOrElse(null)
+            new NodeNavigationProxy(it)
+          }
+          )
         case tn => ???
       }
     }
