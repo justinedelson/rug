@@ -2,7 +2,7 @@ package com.atomist.tree.content.text.microgrammar
 
 import com.atomist.rug.kind.core.{FileArtifactBackedMutableView, FileType}
 import com.atomist.rug.kind.dynamic.{ChildResolver, MutableContainerMutableView, MutableTreeNodeUpdater}
-import com.atomist.rug.spi.{MutableView, TypeProvider, TypeRegistry, Typed}
+import com.atomist.rug.spi._
 import com.atomist.tree.content.text.MutableContainerTreeNode
 import com.atomist.tree.content.text.grammar.MatchListener
 
@@ -13,9 +13,11 @@ import com.atomist.tree.content.text.grammar.MatchListener
   *
   * @param microgrammar microgrammar to evaluate
   */
-class MicrogrammarTypeProvider(microgrammar: Microgrammar)
-  extends TypeProvider(classOf[MutableContainerMutableView])
+class MicrogrammarType(microgrammar: Microgrammar)
+  extends Typed
     with ChildResolver {
+
+  override def typeInformation: TypeInformation = new DynamicTypeInformation {}
 
   override val name: String = microgrammar.name
 

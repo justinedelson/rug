@@ -13,8 +13,8 @@ import jdk.nashorn.api.scripting.AbstractJSObject
   * object and vetoes invocation otherwise and (b) calls the commit() method of the node if found on all invocations of a
   * method that isn't read-only
   *
-  * @param types  Rug types we are fronting. This is a union type.
-  * @param node node we are fronting
+  * @param types Rug types we are fronting. This is a union type.
+  * @param node  node we are fronting
   */
 class SafeCommittingProxy(types: Set[Typed],
                           val node: TreeNode,
@@ -37,8 +37,8 @@ class SafeCommittingProxy(types: Set[Typed],
         op => name.equals(op.name))
 
       if (possibleOps.isEmpty && commandRegistry.findByNodeAndName(node, name).isEmpty) {
-            throw new RugRuntimeException(null,
-              s"Attempt to invoke method [$name] on type [${typ.name}]: No exported method with that name: Found ${possibleOps}")
+        throw new RugRuntimeException(null,
+          s"Attempt to invoke method [$name] on type [${typ.name}]: No exported method with that name: Found ${possibleOps}")
       }
       new MethodInvocationProxy(name, possibleOps)
 
@@ -47,6 +47,8 @@ class SafeCommittingProxy(types: Set[Typed],
       throw new IllegalStateException(s"No static type information is available for type [${typ.name}]: Probably an internal error")
   }
 
+  // We know there's declared operation. Try to invoke it, whether as a command or reflectively
+  // on the node backing class
   private class MethodInvocationProxy(name: String, possibleOps: Seq[TypeOperation])
     extends AbstractJSObject {
 
@@ -81,6 +83,7 @@ class SafeCommittingProxy(types: Set[Typed],
       }
     }
   }
+
 }
 
 private object SafeCommittingProxy {
@@ -95,13 +98,23 @@ private object SafeCommittingProxy {
 
 /**
   * Return a type that exposes all the operations on the given set of types
+  *
   * @param types set of types to expose
   */
 private case class UnionType(types: Set[Typed]) extends Typed {
 
   private val typesToUnion = Set(TypeOperation.TreeNodeType) ++ types
 
+  override val name: String = types.map(_.name).mkString(",")
+
   override def description: String = s"Union-${typesToUnion.map(_.name).mkString(":")}"
+
+  /**
+    * Does this type accept dynamic calls
+    *
+    * @return
+    */
+  def isDynamic: Boolean = types.exists(d => d.typeInformation.isInstanceOf[DynamicTypeInformation])
 
   // TODO what about duplicate names?
   override val typeInformation: TypeInformation = {

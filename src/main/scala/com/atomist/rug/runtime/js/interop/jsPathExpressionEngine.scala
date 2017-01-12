@@ -3,7 +3,6 @@ package com.atomist.rug.runtime.js.interop
 import java.util
 import java.util.Collections
 
-import com.atomist.plan.{IdentityTreeMaterializer, TreeMaterializer}
 import com.atomist.rug.RugRuntimeException
 import com.atomist.rug.command.DefaultCommandRegistry
 import com.atomist.rug.kind.DefaultTypeRegistry
@@ -77,7 +76,7 @@ class jsPathExpressionEngine(
       //println("Parsed matcher=" + parsedMatcher)
       matcherRegistry += parsedMatcher
       val mg = new MatcherMicrogrammar(parsedMatcher)
-      new MicrogrammarTypeProvider(mg)
+      new MicrogrammarType(mg)
   }
 
   /**
@@ -189,8 +188,16 @@ class jsPathExpressionEngine(
     def nodeTypes(node: TreeNode): Set[Typed] =
       node.nodeType.flatMap(t => typeRegistry.findByName(t))
 
-    def proxify(n: TreeNode): Object = n match {
-      case _ => new SafeCommittingProxy(nodeTypes(n), n, cr)
+    def proxify(n: TreeNode): Object = {
+      val types = nodeTypes(n)
+      n match {
+          // TODO also need static dispatch. Or is only one allowed?
+          // Rename dynamic dispatch as mode?
+        case tn if types.exists(t => t.typeInformation.isInstanceOf[DynamicTypeInformation]) =>
+          new NodeNavigationProxy(n)
+        case _ =>
+          new SafeCommittingProxy(types, n, cr)
+      }
     }
 
     new JavaScriptArray(

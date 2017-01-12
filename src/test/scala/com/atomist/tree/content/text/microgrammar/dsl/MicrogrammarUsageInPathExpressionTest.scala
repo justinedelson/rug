@@ -8,7 +8,7 @@ import com.atomist.rug.kind.dynamic.MutableContainerMutableView
 import com.atomist.rug.spi.UsageSpecificTypeRegistry
 import com.atomist.source.EmptyArtifactSource
 import com.atomist.tree.TreeNode
-import com.atomist.tree.content.text.microgrammar.{MatcherMicrogrammar, Microgrammar, MicrogrammarTypeProvider}
+import com.atomist.tree.content.text.microgrammar.{MatcherMicrogrammar, Microgrammar, MicrogrammarType}
 import com.atomist.tree.pathexpression.{ExpressionEngine, PathExpressionEngine}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -54,7 +54,7 @@ class MicrogrammarUsageInPathExpressionTest extends FlatSpec with Matchers {
         "<modelVersion>$modelVersion:§[a-zA-Z0-9_\\.]+§</modelVersion>"))
 
     val tr = new UsageSpecificTypeRegistry(DefaultTypeRegistry,
-      Seq(new MicrogrammarTypeProvider(mg))
+      Seq(new MicrogrammarType(mg))
     )
     val rtn = ee.evaluate(pmv, findFile, tr)
     rtn.right.get.size should be(1)
