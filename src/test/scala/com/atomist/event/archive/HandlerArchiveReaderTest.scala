@@ -39,6 +39,21 @@ class HandlerArchiveReaderTest extends FlatSpec with Matchers {
       """.stripMargin
   )
 
+  var newHandler = StringFileArtifact(atomistConfig.handlersRoot + "/NewHandler.ts",
+    s"""
+       |import {Handler, ClosedIssues, RootMatch, MatchedIssue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+       |export let simple: Handler = {
+       |  name: "SimpleIssueHandler",
+       |  description: "Reassigns issues to Sylvain",
+       |  expression: ClosedIssues,
+       |  handle(root: RootMatch<MatchedIssue>){
+       |    let plan = new ExecutionPlan()
+       |    return plan.addCommand(root.child.reassignTo("sylvain"))
+       |  }
+       |}
+       |
+      """.stripMargin)
+
   it should "parse single handler" in {
     val har = new HandlerArchiveReader(treeMaterializer, atomistConfig)
     val handlers = har.handlers("XX", TestUtils.compileWithModel(new SimpleFileBasedArtifactSource("", FirstHandler)), None, Nil,
@@ -54,6 +69,13 @@ class HandlerArchiveReaderTest extends FlatSpec with Matchers {
     handlers.size should be(2)
     handlers.exists(h => h.rootNodeName == "issue") should be(true)
     handlers.exists(h => h.rootNodeName == "commit") should be(true)
+  }
+
+  it should "parse single new-style handler" in {
+    val har = new HandlerArchiveReader(treeMaterializer, atomistConfig)
+    val handlers = har.handlers("XX", TestUtils.compileWithModel(new SimpleFileBasedArtifactSource("", newHandler)))
+    handlers.size should be(1)
+    handlers.head.rootNodeName should be("issue")
   }
 
   object TestTreeMaterializer extends TreeMaterializer {

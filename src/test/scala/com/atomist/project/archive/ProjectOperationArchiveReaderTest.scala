@@ -167,12 +167,12 @@ class ProjectOperationArchiveReaderTest extends FlatSpec with Matchers {
     val f2 = StringFileArtifact("app/Thing.js", "var Thing = {};")
 
 
-    val rugAs = TestUtils.addUserModel(SimpleFileBasedArtifactSource(
+    val rugAs = SimpleFileBasedArtifactSource(
       StringFileArtifact(".atomist/editors/SimpleEditor.js",
         NashornConstructorTest.SimpleJavascriptEditor),
       f1,
       f2
-    ))
+    ) + TestUtils.user_model
 
 
 
@@ -200,6 +200,46 @@ class ProjectOperationArchiveReaderTest extends FlatSpec with Matchers {
          |   print(`in handler with $${m}`)
          |   print(`Root=$${m.root()}, leaves=$${m.matches()}`)
          |})
+         |
+      """.stripMargin
+    val rugAs = TestUtils.compileWithModel(SimpleFileBasedArtifactSource(
+      StringFileArtifact(".atomist/editors/SimpleGenerator.ts",
+        TypeScriptRugEditorTest.SimpleGenerator),
+      f1,
+      f2,
+      StringFileArtifact(".atomist/handlers/sub.ts", handler)
+    ))
+    val ops = apc.findOperations(rugAs, None, Nil)
+    ops.generators.size should be(1)
+    ops.generators.head.parameters.size should be(0)
+    val result = ops.generators.head.generate(SimpleProjectOperationArguments.Empty)
+    // Should preserve content from the backing archive
+    result.findFile(f1.path).get.content.equals(f1.content) should be(true)
+    result.findFile(f2.path).get.content.equals(f2.content) should be(true)
+
+    // Should contain new contain
+    result.findFile("src/from/typescript").get.content.contains("Anders") should be(true)
+  }
+
+  it should "ignore unbound handler in the new style" in {
+    val apc = new ProjectOperationArchiveReader(atomistConfig)
+    val f1 = StringFileArtifact("package.json", "{}")
+    val f2 = StringFileArtifact("app/Thing.ts", "class Thing {}")
+
+    // We don't know the Atomist declared variable. So ignore it.
+    val handler =
+      s"""
+         |import {Handler, ClosedIssues, RootMatch, MatchedIssue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+         |export let simple: Handler = {
+         |  name: "SimpleIssueHandler",
+         |  expression: ClosedIssues,
+         |  description: "Fancy Handler",
+         |  handle(root: RootMatch<MatchedIssue>){
+         |    let plan = new ExecutionPlan()
+         |    return plan.addCommand(root.child.reassignTo("syvain"))
+         |  }
+         |}
+         |
          |
       """.stripMargin
     val rugAs = TestUtils.compileWithModel(SimpleFileBasedArtifactSource(

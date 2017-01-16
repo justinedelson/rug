@@ -46,6 +46,31 @@ class HandlerTest extends FlatSpec with Matchers {
     }
 
   }
+
+  it should "find and invoke other style of handler" in {
+
+      val subscription =
+        s"""
+           |import {Handler, ClosedIssues, RootMatch, MatchedIssue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+           |export let simple: Handler = {
+           |  name: "SimpleIssueHandler",
+           |  expression: ClosedIssues,
+           |  description: "Blah",
+           |  handle(root: RootMatch<MatchedIssue>){
+           |    let plan = new ExecutionPlan()
+           |    return plan.addCommand(root.child.reassignTo("syvain"))
+           |  }
+           |}
+           |
+      """.stripMargin
+      val r = TestUtils.compileWithModel(SimpleFileBasedArtifactSource(
+        StringFileArtifact(".atomist/handlers/handler1.ts", subscription)
+      ))
+
+      val jsc = new JavaScriptContext()
+
+      jsc.load(r)
+    }
 }
 
 
