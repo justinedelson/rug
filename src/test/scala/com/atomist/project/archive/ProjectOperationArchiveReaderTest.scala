@@ -229,14 +229,14 @@ class ProjectOperationArchiveReaderTest extends FlatSpec with Matchers {
     // We don't know the Atomist declared variable. So ignore it.
     val handler =
       s"""
-         |import {Handler, ClosedIssues, RootMatch, MatchedIssue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+         |import {Handler, ClosedIssues, Issue, Event, ExecutionPlan} from "@atomist/rug/operations/Handlers"
          |export let simple: Handler = {
          |  name: "SimpleIssueHandler",
          |  expression: ClosedIssues,
          |  description: "Fancy Handler",
-         |  handle(root: RootMatch<MatchedIssue>){
+         |  handle(event: Event<Issue>){
          |    let plan = new ExecutionPlan()
-         |    return plan.addCommand(root.child.reassignTo("syvain"))
+         |    return plan.addCommand(event.child.reassignTo("syvain"))
          |  }
          |}
          |

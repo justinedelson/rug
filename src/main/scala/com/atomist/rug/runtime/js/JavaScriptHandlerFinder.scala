@@ -64,7 +64,7 @@ object JavaScriptHandlerFinder {
 
       val tags = readTagsFromMetadata(obj)
       if(name != null && description != null && handle != null && expression != null){
-        acc :+ new NamedJavaScriptEventHandler(expression, handle, rugAs, ctx, name, description,tags)
+        acc :+ new NamedJavaScriptEventHandler(expression, handle, obj, rugAs, ctx, name, description,tags)
       }else{
         acc
       }

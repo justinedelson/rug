@@ -51,14 +51,14 @@ class HandlerTest extends FlatSpec with Matchers {
 
       val subscription =
         s"""
-           |import {Handler, ClosedIssues, RootMatch, MatchedIssue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+           |import {Handler, ClosedIssues, Event, Issue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
            |export let simple: Handler = {
            |  name: "SimpleIssueHandler",
            |  expression: ClosedIssues,
            |  description: "Blah",
-           |  handle(root: RootMatch<MatchedIssue>){
+           |  handle(event: Event<Issue>){
            |    let plan = new ExecutionPlan()
-           |    return plan.addCommand(root.child.reassignTo("syvain"))
+           |    return plan.addCommand(event.child.reassignTo("syvain"))
            |  }
            |}
            |

@@ -41,14 +41,14 @@ class HandlerArchiveReaderTest extends FlatSpec with Matchers {
 
   var newHandler = StringFileArtifact(atomistConfig.handlersRoot + "/NewHandler.ts",
     s"""
-       |import {Handler, ClosedIssues, RootMatch, MatchedIssue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+       |import {Handler, ClosedIssues, Event, Issue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
        |export let simple: Handler = {
        |  name: "SimpleIssueHandler",
        |  description: "Reassigns issues to Sylvain",
        |  expression: ClosedIssues,
-       |  handle(root: RootMatch<MatchedIssue>){
+       |  handle(event: Event<Issue>){
        |    let plan = new ExecutionPlan()
-       |    return plan.addCommand(root.child.reassignTo("sylvain"))
+       |    return plan.addCommand(event.child.reassignTo("sylvain"))
        |  }
        |}
        |
