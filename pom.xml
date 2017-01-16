@@ -287,7 +287,7 @@
                         <configuration>
                             <nodeVersion>v7.2.1</nodeVersion>
                         </configuration>
-                        <phase>generate-sources</phase>
+                        <phase>prepare-package</phase>
                     </execution>
                     <execution>
                         <id>install typescript</id>
@@ -297,7 +297,7 @@
                         <configuration>
                             <arguments>install typescript</arguments>
                         </configuration>
-                        <phase>process-test-resources</phase>
+                        <phase>prepare-package</phase>
                     </execution>
                 </executions>
                 <configuration>
@@ -315,7 +315,7 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                        <phase>process-test-resources</phase>
+                        <phase>prepare-package</phase>
                         <configuration>
                             <tasks>
                                 <exec executable="target/node_modules/typescript/bin/tsc" failonerror="true">
@@ -375,7 +375,7 @@
                         <goals>
                             <goal>java</goal>
                         </goals>
-                        <phase>compile</phase>
+                        <phase>package</phase>
                         <configuration>
                             <mainClass>com.atomist.rug.ts.TypeScriptInterfaceGenerator</mainClass>
                             <arguments>
