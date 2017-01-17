@@ -4,7 +4,7 @@ import com.atomist.event.{HandlerContext, SystemEvent}
 import com.atomist.param.Tag
 import com.atomist.rug.RugRuntimeException
 import com.atomist.rug.kind.DefaultTypeRegistry
-import com.atomist.rug.kind.service.{Message, ServiceSource, ServicesMutableView}
+import com.atomist.rug.kind.service._
 import com.atomist.rug.runtime.js.JavaScriptEventHandler
 import com.atomist.source.ArtifactSource
 import com.atomist.tree.TreeNode
@@ -28,7 +28,9 @@ class NamedJavaScriptEventHandler(pathExpressionStr: String,
   extends JavaScriptEventHandler(pathExpressionStr, handlerFunction, rugAs, ctx.treeMaterializer, ctx.pathExpressionEngine) {
 
   override def name: String = _name
+
   override def tags: Seq[Tag] = _tags
+
   override def description: String = _description
 
   override def handle(e: SystemEvent, s2: ServiceSource): Unit = {
@@ -56,55 +58,82 @@ class NamedJavaScriptEventHandler(pathExpressionStr: String,
   }
 
   override protected def invokeHandlerFunction(e: SystemEvent, cm: ContextMatch): Object = {
-    handlerFunction.call(thiz, new Event(cm))
+    handlerFunction.call(thiz, Event(cm))
   }
 
+  /**
+    * Extract all messages and use messageBuilder/actionRegistry to find and dispatch actions
+    * @param plan
+    */
   def dispatch(plan: Object): Unit = {
     plan match {
       case o: ScriptObjectMirror => {
-        val messages = extractMessages(o)
-
+        o.get("messages") match {
+          case messages: ScriptObjectMirror if messages.isArray => {
+            messages.values().asScala.foreach(msg => {
+              val m = msg.asInstanceOf[ScriptObjectMirror]
+              var responseMessage = ctx.messageBuilder.regarding(m.get("regarding").asInstanceOf[TreeNode])
+              responseMessage =m.get("text") match {
+                case text: String => responseMessage.say(text)
+                case _ => responseMessage
+              }
+              responseMessage = m.get("channelId") match {
+                case c: String => responseMessage.on(c)
+                case _ => responseMessage
+              }
+              responseMessage = m.get("rugs") match {
+                case rugs: ScriptObjectMirror if rugs.isArray => {
+                  addActions(responseMessage, rugs)
+                }
+                case _ => responseMessage
+              }
+              responseMessage.send()
+            })
+          }
+        }
       }
-      case _ => //nothing to do
     }
   }
 
-  def extractMessages(o: ScriptObjectMirror) : Seq[Message] = {
-    o.get("messages") match {
-      case messages: ScriptObjectMirror if messages.isArray => {
-        messages.values().asScala.map(msg => {
-          val m = msg.asInstanceOf[ScriptObjectMirror]
-
-          val responseMessage = ctx.messageBuilder.regarding(m.get("regarding").asInstanceOf[TreeNode])
-          m.get("text") match {
-            case text: String => responseMessage.say(text)
+  /**
+    * Extract action from JS and bind to Message
+    *
+    * Beware use of var!
+    *
+    * @param msg current message
+    * @param rugs array of Rugs
+    * @return new message
+    */
+  def addActions(msg: Message, rugs: ScriptObjectMirror) : Message = {
+    var responseMessage = msg
+    for (rug <- rugs.values().asScala) {
+      val r = rug.asInstanceOf[ScriptObjectMirror]
+      //TODO - this is a reimplementation of the @cd's label hack - but at least it's not in TS
+      val actionName = r.get("label") match {
+        case label: String => s"${r.get("name").asInstanceOf[String]}|$label"
+        case _ => r.get("name").asInstanceOf[String]
+      }
+      var action = responseMessage.actionRegistry.findByName(actionName)
+      r.get("params") match {
+        case params: ScriptObjectMirror => {
+          for (param <- params.entrySet().asScala) {
+            action = responseMessage.actionRegistry.bindParameter(action, param.getKey, param.getValue)
           }
-          m.get("channelId") match {
-            case c: String => responseMessage.on(c)
-          }
-          m.get("rugs") match {
-            case rugs: ScriptObjectMirror if rugs.isArray => {
-              for (rug <- rugs.values().asScala) {
-                 val r = rug.asInstanceOf[ScriptObjectMirror]
-
-                 val action = responseMessage.actionRegistry.findByName(r.get("name").asInstanceOf[String])
-                  action.
-              }
-            }
-            case _ =>
-          }
-          responseMessage
-        })
-      }.toSeq
-      case _ => Seq[Message]()
+        }
+        case _ =>
+      }
+      responseMessage = msg.withAction(action)
     }
+    responseMessage
   }
 }
 
+
 /**
   * Represents an event that drives a handler
+  *
   * @param cm the root node in the tree
   */
-class Event(cm: ContextMatch) {
+case class Event(cm: ContextMatch) {
   def child: ContextMatch = cm
 }

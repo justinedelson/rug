@@ -51,17 +51,22 @@ class HandlerTest extends FlatSpec with Matchers {
 
       val subscription =
         s"""
-           |import {Handler, ClosedIssues, Event, Issue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+           |import {Handler, ClosedIssues, Event, Issue, ExecutionPlan, Message, ReopenIssue} from "@atomist/rug/operations/Handlers"
            |export let simple: Handler = {
-           |  name: "SimpleIssueHandler",
+           |  name: "ClosedIssueReopener",
            |  expression: ClosedIssues,
-           |  description: "Blah",
+           |  description: "Reopens closed issues",
            |  handle(event: Event<Issue>){
-           |    let plan = new ExecutionPlan()
-           |    return plan.addCommand(event.child.reassignTo("syvain"))
+           |    let issue = event.child
+           |
+           |    return new ExecutionPlan()
+           |      .addMessage(new Message(issue)
+           |        .addExecutor(new ReopenIssue("Reopen")
+           |          .withNumber(issue.number)
+           |          .withRepo(issue.repo)
+           |          .withOwner(issue.owner)))
            |  }
            |}
-           |
       """.stripMargin
       val r = TestUtils.compileWithModel(SimpleFileBasedArtifactSource(
         StringFileArtifact(".atomist/handlers/handler1.ts", subscription)

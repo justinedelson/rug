@@ -229,18 +229,22 @@ class ProjectOperationArchiveReaderTest extends FlatSpec with Matchers {
     // We don't know the Atomist declared variable. So ignore it.
     val handler =
       s"""
-         |import {Handler, ClosedIssues, Issue, Event, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+        import {Handler, ClosedIssues, Event, Issue, ExecutionPlan, Message, ReopenIssue} from "@atomist/rug/operations/Handlers"
          |export let simple: Handler = {
-         |  name: "SimpleIssueHandler",
+         |  name: "ClosedIssueReopener",
          |  expression: ClosedIssues,
-         |  description: "Fancy Handler",
+         |  description: "Reopens closed issues",
          |  handle(event: Event<Issue>){
-         |    let plan = new ExecutionPlan()
-         |    return plan.addCommand(event.child.reassignTo("syvain"))
+         |    let issue = event.child
+         |
+         |    return new ExecutionPlan()
+         |      .addMessage(new Message(issue)
+         |        .addExecutor(new ReopenIssue("Reopen")
+         |          .withNumber(issue.number)
+         |          .withRepo(issue.repo)
+         |          .withOwner(issue.owner)))
          |  }
          |}
-         |
-         |
       """.stripMargin
     val rugAs = TestUtils.compileWithModel(SimpleFileBasedArtifactSource(
       StringFileArtifact(".atomist/editors/SimpleGenerator.ts",

@@ -41,17 +41,22 @@ class HandlerArchiveReaderTest extends FlatSpec with Matchers {
 
   var newHandler = StringFileArtifact(atomistConfig.handlersRoot + "/NewHandler.ts",
     s"""
-       |import {Handler, ClosedIssues, Event, Issue, ExecutionPlan} from "@atomist/rug/operations/Handlers"
+       import {Handler, ClosedIssues, Event, Issue, ExecutionPlan, Message, ReopenIssue} from "@atomist/rug/operations/Handlers"
        |export let simple: Handler = {
-       |  name: "SimpleIssueHandler",
-       |  description: "Reassigns issues to Sylvain",
+       |  name: "ClosedIssueReopener",
        |  expression: ClosedIssues,
+       |  description: "Reopens closed issues",
        |  handle(event: Event<Issue>){
-       |    let plan = new ExecutionPlan()
-       |    return plan.addCommand(event.child.reassignTo("sylvain"))
+       |    let issue = event.child
+       |
+       |    return new ExecutionPlan()
+       |      .addMessage(new Message(issue)
+       |        .addExecutor(new ReopenIssue("Reopen")
+       |          .withNumber(issue.number)
+       |          .withRepo(issue.repo)
+       |          .withOwner(issue.owner)))
        |  }
        |}
-       |
       """.stripMargin)
 
   it should "parse single handler" in {
@@ -73,7 +78,8 @@ class HandlerArchiveReaderTest extends FlatSpec with Matchers {
 
   it should "parse single new-style handler" in {
     val har = new HandlerArchiveReader(treeMaterializer, atomistConfig)
-    val handlers = har.handlers("XX", TestUtils.compileWithModel(new SimpleFileBasedArtifactSource("", newHandler)))
+    val handlers = har.handlers("XX", TestUtils.compileWithModel(new SimpleFileBasedArtifactSource("", newHandler)), None, Nil,
+      new ConsoleMessageBuilder("XX", null))
     handlers.size should be(1)
     handlers.head.rootNodeName should be("issue")
   }

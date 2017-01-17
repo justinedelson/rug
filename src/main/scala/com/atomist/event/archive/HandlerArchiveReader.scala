@@ -38,15 +38,12 @@ class HandlerArchiveReader(
                 messageBuilder: MessageBuilder): Seq[SystemEventHandler] = {
     val atomist = new ModelBackedAtomistFacade(teamId, messageBuilder, treeMaterializer)
     JavaScriptHandlerFinder.registerHandlers(rugArchive, atomist)
-    atomist.handlers
-  }
-
-  @throws[BadRugException]
-  @throws[IllegalArgumentException]
-  def handlers(
-                teamId: String,
-                rugArchive: ArtifactSource): Seq[SystemEventHandler] = {
-    JavaScriptHandlerFinder.fromJavaScriptArchive(rugArchive, new JavaScriptHandlerContext(teamId,treeMaterializer))
+    val handlers = atomist.handlers
+    if(handlers.nonEmpty){
+      handlers
+    }else{
+      JavaScriptHandlerFinder.fromJavaScriptArchive(rugArchive, new JavaScriptHandlerContext(teamId,treeMaterializer, messageBuilder))
+    }
   }
 }
 
