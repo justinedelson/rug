@@ -135,5 +135,5 @@ class NamedJavaScriptEventHandler(pathExpressionStr: String,
   * @param cm the root node in the tree
   */
 case class Event(cm: ContextMatch) {
-  def child: ContextMatch = cm
+  def child: TreeNode = cm.root.asInstanceOf[TreeNode]
 }
