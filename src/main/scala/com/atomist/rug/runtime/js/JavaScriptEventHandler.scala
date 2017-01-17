@@ -36,7 +36,7 @@ class JavaScriptEventHandler(
 
   import com.atomist.tree.pathexpression.ExpressionEngine.NodePreparer
 
-  private def nodePreparer(hc: HandlerContext): NodePreparer = {
+  protected def nodePreparer(hc: HandlerContext): NodePreparer = {
     case mca: ModelContextAware =>
       mca.setContext(hc)
       mca
@@ -66,7 +66,7 @@ class JavaScriptEventHandler(
     }
   }
 
-  protected def invokeHandlerFunction(e: SystemEvent, cm: ContextMatch): Unit = {
+  protected def invokeHandlerFunction(e: SystemEvent, cm: ContextMatch): Object = {
     handlerFunction.call("apply", cm)
   }
 }
